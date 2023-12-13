@@ -235,6 +235,14 @@ namespace UnityEngine.UI.Windows {
         OnLayoutReady,
 
     }
+    
+    public struct ClosureDefault { }
+
+    public struct ClosureOnInitialized<T> where T : WindowBase {
+
+        public System.Action<T> onInitialized;
+
+    }
 
     [DefaultExecutionOrder(-1000)]
     public class WindowSystem : MonoBehaviour {
@@ -1525,6 +1533,20 @@ namespace UnityEngine.UI.Windows {
 
         }
         
+        public static T ShowSync<T, TClosure>(T source, InitialParameters initialParameters, System.Action<T, TClosure> onInitialized = null, TClosure closure = default, TransitionParameters transitionParameters = default) where T : WindowBase {
+
+            T instance = default;
+            initialParameters.showSync = true;
+            WindowSystem.instance.Show_INTERNAL<T, TClosure>(source, initialParameters, (w, closureInner) => {
+                
+                instance = w;
+                onInitialized?.Invoke(w, closureInner);
+                
+            }, closure, transitionParameters);
+            return instance;
+
+        }
+        
         /// <summary>
         /// Initializing window in sync mode.
         /// Just returns instance immediately, but still stay in async mode for layout because of Addressable assets.
@@ -1539,10 +1561,22 @@ namespace UnityEngine.UI.Windows {
             return WindowSystem.ShowSync(WindowSystem.instance.GetSource<T>(), initialParameters, onInitialized, transitionParameters);
 
         }
+        
+        public static T ShowSync<T, TClosure>(InitialParameters initialParameters, System.Action<T, TClosure> onInitialized = null, TClosure closure = default, TransitionParameters transitionParameters = default) where T : WindowBase {
+
+            return WindowSystem.ShowSync(WindowSystem.instance.GetSource<T>(), initialParameters, onInitialized, closure, transitionParameters);
+
+        }
 
         public static T ShowSync<T>(System.Action<T> onInitialized = null, TransitionParameters transitionParameters = default) where T : WindowBase {
 
             return WindowSystem.ShowSync(default, onInitialized, transitionParameters);
+
+        }
+        
+        public static T ShowSync<T, TClosure>(System.Action<T, TClosure> onInitialized = null, TClosure closure = default, TransitionParameters transitionParameters = default) where T : WindowBase {
+
+            return WindowSystem.ShowSync(default, onInitialized, closure, transitionParameters);
 
         }
 
@@ -1551,10 +1585,22 @@ namespace UnityEngine.UI.Windows {
             WindowSystem.instance.Show_INTERNAL(new InitialParameters(), onInitialized, transitionParameters);
 
         }
+        
+        public static void Show<T, TClosure>(System.Action<T, TClosure> onInitialized = null, TClosure closure = default, TransitionParameters transitionParameters = default) where T : WindowBase {
+
+            WindowSystem.instance.Show_INTERNAL(new InitialParameters(), onInitialized, closure, transitionParameters);
+
+        }
 
         public static void Show(WindowBase source, System.Action<WindowBase> onInitialized = null, TransitionParameters transitionParameters = default) {
 
             WindowSystem.instance.Show_INTERNAL(source, new InitialParameters(), onInitialized, transitionParameters);
+
+        }
+        
+        public static void Show<TClosure>(WindowBase source, System.Action<WindowBase, TClosure> onInitialized = null, TClosure closure = default, TransitionParameters transitionParameters = default) {
+
+            WindowSystem.instance.Show_INTERNAL(source, new InitialParameters(), onInitialized, closure, transitionParameters);
 
         }
 
@@ -1563,10 +1609,22 @@ namespace UnityEngine.UI.Windows {
             WindowSystem.instance.Show_INTERNAL(source, new InitialParameters(), onInitialized, transitionParameters);
 
         }
+        
+        public static void Show<T, TClosure>(WindowBase source, System.Action<T, TClosure> onInitialized = null, TClosure closure = default, TransitionParameters transitionParameters = default) where T : WindowBase {
+
+            WindowSystem.instance.Show_INTERNAL(source, new InitialParameters(), onInitialized, closure, transitionParameters);
+
+        }
 
         public static void Show<T>(InitialParameters initialParameters, System.Action<T> onInitialized = null, TransitionParameters transitionParameters = default) where T : WindowBase {
 
             WindowSystem.instance.Show_INTERNAL(initialParameters, onInitialized, transitionParameters);
+
+        }
+        
+        public static void Show<T, TClosure>(InitialParameters initialParameters, System.Action<T, TClosure> onInitialized = null, TClosure closure = default, TransitionParameters transitionParameters = default) where T : WindowBase {
+
+            WindowSystem.instance.Show_INTERNAL(initialParameters, onInitialized, closure, transitionParameters);
 
         }
 
@@ -1575,10 +1633,22 @@ namespace UnityEngine.UI.Windows {
             WindowSystem.instance.Show_INTERNAL(source, initialParameters, onInitialized, transitionParameters);
 
         }
+        
+        public static void Show<TClosure>(WindowBase source, InitialParameters initialParameters, System.Action<WindowBase, TClosure> onInitialized = null, TClosure closure = default, TransitionParameters transitionParameters = default) {
+
+            WindowSystem.instance.Show_INTERNAL(source, initialParameters, onInitialized, closure, transitionParameters);
+
+        }
 
         public static void Show<T>(WindowBase source, InitialParameters initialParameters, System.Action<T> onInitialized = null, TransitionParameters transitionParameters = default) where T : WindowBase {
 
             WindowSystem.instance.Show_INTERNAL(source, initialParameters, onInitialized, transitionParameters);
+
+        }
+        
+        public static void Show<T, TClosure>(WindowBase source, InitialParameters initialParameters, System.Action<T, TClosure> onInitialized = null, TClosure closure = default, TransitionParameters transitionParameters = default) where T : WindowBase {
+
+            WindowSystem.instance.Show_INTERNAL(source, initialParameters, onInitialized, closure, transitionParameters);
 
         }
 
@@ -1732,8 +1802,21 @@ namespace UnityEngine.UI.Windows {
             this.Show_INTERNAL(source, initialParameters, onInitialized, transitionParameters);
 
         }
+        
+        private void Show_INTERNAL<T, TClosure>(InitialParameters initialParameters, System.Action<T, TClosure> onInitialized = null, TClosure closure = default, TransitionParameters transitionParameters = default) where T : WindowBase {
+
+            var source = this.GetSource<T>();
+            this.Show_INTERNAL(source, initialParameters, onInitialized, closure, transitionParameters);
+
+        }
 
         private void Show_INTERNAL<T>(WindowBase source, InitialParameters initialParameters, System.Action<T> onInitialized, TransitionParameters transitionParameters) where T : WindowBase {
+            
+            this.Show_INTERNAL<T, ClosureOnInitialized<T>>(source, initialParameters, (window, closure) => closure.onInitialized?.Invoke(window), new ClosureOnInitialized<T>() {onInitialized = onInitialized}, transitionParameters);
+            
+        }
+
+        private void Show_INTERNAL<T, TClosure>(WindowBase source, InitialParameters initialParameters, System.Action<T, TClosure> onInitialized, TClosure closure, TransitionParameters transitionParameters) where T : WindowBase {
 
             if (source == null) {
 
@@ -1761,7 +1844,7 @@ namespace UnityEngine.UI.Windows {
 
                     if (onInitialized != null) {
                         
-                        onInitialized.Invoke((T)instance);
+                        onInitialized.Invoke((T)instance, closure);
                         
                     } else {
                         
@@ -1802,7 +1885,7 @@ namespace UnityEngine.UI.Windows {
 
                     }
 
-                    WindowSystem.RegisterActionOnce(existInstance, state, () => { this.Show_INTERNAL(existInstance, initialParameters, onInitialized, transitionParameters); });
+                    WindowSystem.RegisterActionOnce(existInstance, state, () => { this.Show_INTERNAL(existInstance, initialParameters, onInitialized, closure, transitionParameters); });
 
                     return;
 
@@ -1844,7 +1927,7 @@ namespace UnityEngine.UI.Windows {
 
                 if (onInitialized != null) {
                     
-                    onInitialized.Invoke((T)instance);
+                    onInitialized.Invoke((T)instance, closure);
                     
                 } else {
                     
@@ -1860,7 +1943,7 @@ namespace UnityEngine.UI.Windows {
 
                     if (onInitialized != null) {
 
-                        onInitialized.Invoke((T)instance);
+                        onInitialized.Invoke((T)instance, closure);
 
                     } else {
 
