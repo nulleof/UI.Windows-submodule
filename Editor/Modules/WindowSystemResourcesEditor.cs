@@ -129,9 +129,16 @@ namespace UnityEditor.UI.Windows {
                         if (loadedBundles.Count == 0) {
                             
                             GUILayout.Space(10f);
-                            if (UnityEditor.AddressableAssets.AddressableAssetSettingsDefaultObject.Settings.ActivePlayModeDataBuilder is UnityEditor.AddressableAssets.Build
-                                    .DataBuilders.BuildScriptVirtualMode ||
-                                UnityEditor.AddressableAssets.AddressableAssetSettingsDefaultObject.Settings.ActivePlayModeDataBuilder is UnityEditor.AddressableAssets.Build
+
+                            bool isBuildScriptVirtualMode = false;
+                            #if !UNITY_6000_0_OR_NEWER
+                            isBuildScriptVirtualMode =
+                                UnityEditor.AddressableAssets.AddressableAssetSettingsDefaultObject.Settings
+                                    .ActivePlayModeDataBuilder is UnityEditor.AddressableAssets.Build
+                                    .DataBuilders.BuildScriptVirtualMode;
+                            #endif
+                            
+                            if (isBuildScriptVirtualMode == true || UnityEditor.AddressableAssets.AddressableAssetSettingsDefaultObject.Settings.ActivePlayModeDataBuilder is UnityEditor.AddressableAssets.Build
                                     .DataBuilders.BuildScriptFastMode) {
                                 
                                 GUILayout.Label("Seems like there are no bundles loaded yet.\nYou run with VirtualMode now, change mode to use Addressables as in build version.", EditorStyles.centeredGreyMiniLabel);
